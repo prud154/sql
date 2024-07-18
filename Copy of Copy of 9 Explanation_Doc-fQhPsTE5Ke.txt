@@ -1,0 +1,71 @@
+ Source = Onprem  - SQL server
+ Destination = ADLS - CSV files
+ 
+ 
+ On 1st April 1:00 AM  ( 1000)
+ 
+ You to move 1000 Rows
+ 
+ ________________________________________
+ 
+ On  2nd April 1:00 AM  (1200)
+ 
+ 
+ You have to move 200 Rows
+ -----------------------------------------
+ 
+ On  3rd April 1:00 AM  (1500)
+ 
+ 
+ You have to move 300 Rows
+ -----------------------------------------
+ 
+ HighWaterMark: Store the last execution timestamp
+ 
+ One file in ADLS (HighWaterMark.txt) : Last Execution Timestamp: 01-01-1900 00:00:00
+ 
+ 
+ One Look up activity: 01-01-1900 00:00:00
+ 2nd Look up activity: Go to the database and get the Max(LastModifiedDate) 01-04-2022 00:30:40
+ 3rd Copy activity: select * from customer where LastModifiedDate > '01-01-1900 00:00:00' and LastModifiedDate <= '01-04-2022 00:30:40'
+ 4th Copy activity: Update the HighWaterMark : 01-04-2022 00:30:40
+ 
+ *************************************** 2nd April 01:00 AM*******************************************************
+ 
+ One Look up activity: 01-04-2022 00:30:40
+ 2nd Look up activity: Go to the database and get the Max(LastModifiedDate) 02-04-2022 00:40:45
+ 3rd Copy activity: select * from customer where LastModifiedDate > '01-04-2022 00:30:40' and LastModifiedDate <= '02-04-2022 00:40:45'
+ 4th Copy activity: Update the HighWaterMark : 02-04-2022 00:40:45
+ 
+ 
+ *************************************** 3rd April 01:00 AM*******************************************************
+ 
+ One Look up activity: 02-04-2022 00:40:45
+ 2nd Look up activity: Go to the database and get the Max(LastModifiedDate) 03-04-2022 00:40:45
+ 3rd Copy activity: select * from customer where LastModifiedDate > '02-04-2022 00:40:45'--- and LastModifiedDate <= '03-04-2022 00:40:45'
+ 4th Copy activity: Update the HighWaterMark : 02-04-2022 00:40:45
+ 
+ ************************************************************************************
+ 
+@concat('select * from saleslt.customer where ModifiedDate > ''', activity('Get the High water mark date').output.firstRow.Prop_0, ''' and ModifiedDate <= ''',activity('Get the Last Modified Record Date from DB').output.firstRow.RecordDate, '''' )
+
+
+select date from saleslt.customer where CustomerID = 1
+
+@concat('select ''', activity('Get the Last Modified Record Date from DB').output.firstRow.RecordDate, ''' as new_date from salesLt.customer where customerid =1')
+
+
+
+******************************************* HighWaterMark Table********************************
+TableName,   RunTimeSatmp
+Customer     02-04-2022 00:40:45
+Product		 02-04-2022 00:40:45
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
