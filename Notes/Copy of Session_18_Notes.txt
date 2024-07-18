@@ -1,0 +1,263 @@
+-- RECURSIVE SQL QUERIES
+
+-- Syntax:
+
+with recursive cte as
+    (base query -- the starting point
+     union / union all
+     recursive part of the query -- which use the result from cte
+     include a termination condition
+    )
+select *
+from cte;
+
+
+-- Q1: Display number from 1 to 10 without using any in built functions.
+
+with recursive cte as
+    (select 1 as n
+    union
+    select (n + 1) as n
+    from cte
+    where n < 10)
+select *
+from cte;
+
+
+
+-- Q2: Find the hierarchy of employees under a given manager "Asha".
+
+CREATE TABLE emp_details
+    (
+        id           int PRIMARY KEY,
+        name         varchar(100),
+        manager_id   int,
+        salary       int,
+        designation  varchar(100)
+    );
+INSERT INTO emp_details VALUES (1,  'Shripadh', NULL, 10000, 'CEO');
+INSERT INTO emp_details VALUES (2,  'Satya', 5, 1400, 'Software Engineer');
+INSERT INTO emp_details VALUES (3,  'Jia', 5, 500, 'Data Analyst');
+INSERT INTO emp_details VALUES (4,  'David', 5, 1800, 'Data Scientist');
+INSERT INTO emp_details VALUES (5,  'Michael', 7, 3000, 'Manager');
+INSERT INTO emp_details VALUES (6,  'Arvind', 7, 2400, 'Architect');
+INSERT INTO emp_details VALUES (7,  'Asha', 1, 4200, 'CTO');
+INSERT INTO emp_details VALUES (8,  'Maryam', 1, 3500, 'Manager');
+INSERT INTO emp_details VALUES (9,  'Reshma', 8, 2000, 'Business Analyst');
+INSERT INTO emp_details VALUES (10, 'Akshay', 8, 2500, 'Java Developer');
+commit;
+
+-- Q2: Find the hierarchy of employees under a given manager "Asha".
+
+select * from emp_details;
+
+Asha --> Michael --> Satya, Jia, David
+Asha --> Arvind
+
+with recursive cte as
+    (select id as emp_id, name as emp_name, manager_id, 1 as level
+     from emp_details where name = 'Asha'
+    union
+     select e.id as emp_id, e.name as emp_name, e.manager_id, (level+1) as level
+     from emp_details e
+     join cte on cte.emp_id = e.manager_id
+    )
+select *
+from cte;
+
+
+-- 1st iteration:
+select id as emp_id, name as emp_name, manager_id, 1 as level
+from emp_details where name = 'Asha'
+
+-- 2nd iteration:
+select e.id as emp_id, e.name as emp_name, e.manager_id, (level+1) as level
+from emp_details e
+join (  select id as emp_id, name as emp_name, manager_id, 1 as level
+        from emp_details where name = 'Asha'
+     ) cte
+        on cte.emp_id = e.manager_id
+
+-- 3rd iteration:
+select e.id as emp_id, e.name as emp_name, e.manager_id, (level+1) as level
+from emp_details e
+join (  select e.id as emp_id, e.name as emp_name, e.manager_id, (level+1) as level
+        from emp_details e
+        join (select id as emp_id, name as emp_name, manager_id, 1 as level
+             from emp_details where name = 'Asha') cte
+                on cte.emp_id = e.manager_id
+     ) cte
+                    on cte.emp_id = e.manager_id
+
+-- 4th iteration:
+select e.id as emp_id, e.name as emp_name, e.manager_id, (level+1) as level
+from emp_details e
+join (  select e.id as emp_id, e.name as emp_name, e.manager_id, (level+1) as level
+        from emp_details e
+        join (  select e.id as emp_id, e.name as emp_name, e.manager_id, (level+1) as level
+                from emp_details e
+                join (select id as emp_id, name as emp_name, manager_id, 1 as level
+                     from emp_details where name = 'Asha') cte
+                        on cte.emp_id = e.manager_id
+             ) cte
+                            on cte.emp_id = e.manager_id
+     ) cte on cte.emp_id = e.manager_id
+
+
+-- What is someone has 2 managers:
+insert into emp_details values (6,) -- cannot do since id is PK
+
+-- Questions re-qrite above query to display only emp_id, emp_name and manager_name
+
+Brent
+with recursive cte as (select id as emp_id, name as emp_name, manager_id, null::text as manager_name from emp_details where name = 'Asha' union select e.id as emp_id, e.name as emp_name, e.manager_id, cte.emp_name as manager_name from emp_details e join cte on cte.emp_id = e.manager_id ) select emp_id, emp_name, manager_name from cte
+
+Murali
+WITH RECURSIVE cte AS (SELECT id as emp_id, name AS emp_name, ' '::VARCHAR, 1 as level FROM emp_details WHERE name = 'Asha' UNION SELECT e.id as emp_id, e.name AS emp_name, cte.emp_name as Manager_name, (level+1) as level FROM emp_details e JOIN cte ON cte.emp_id = e.manager_id ) SELECT * FROM cte
+
+Bhavesh
+with recursive cte as (select id as emp_id, name as emp_name, manager_id, 1 as level from emp_details where name = 'Asha' union select e.id as emp_id, e.name as emp_name, e.manager_id, (level+1) as level from emp_details e join cte on cte.emp_id = e.manager_id ) select e.emp_name as employee, b.emp_name as boss, level from cte e left join emp_details b on e.emp_id = b.id order by e.level, e.emp_id
+
+Prashanth
+with recursive cte as ( select id as emp_id, name as emp_name, 'Null' as Manager_Name, 1 as level from emp_details where name = 'Asha' union select e.id as emp_id, e.name as emp_name, CTE.Emp_Name as Manager_Name, (level+1) as level from emp_details e join cte on cte.emp_id = e.manager_id ) select * from cte;
+
+
+with recursive cte as
+    (select emp.id as emp_id, emp.name as emp_name, mng.name as manager
+     from emp_details emp
+     join emp_details mng on emp.manager_id = mng.id
+     where emp.name = 'Asha'
+    union all
+     select e.id as emp_id, e.name as emp_name, cte.emp_name as manager
+     from emp_details e
+     join cte on cte.emp_id = e.manager_id
+    )
+select *
+from cte;
+
+
+
+/* Q3: Find the hierarchy of managers for a given employee "David"*/
+select * from emp_details;
+
+with recursive cte as
+    (select emp.id as emp_id, emp.name as emp_name, emp.manager_id
+     from emp_details emp
+     where emp.name = 'David'
+    union all
+     select e.id as emp_id, e.name as emp_name, e.manager_id
+     from emp_details e
+     join cte on cte.manager_id = e.id
+    )
+select *
+from cte;
+
+
+-- Re-write the above query to display the emp_name and manager -- this query needs to be modified.
+with recursive cte as
+    (select emp.id as emp_id, emp.name as emp_name, emp.manager_id, mng.name as manager_name
+     from emp_details emp
+     join emp_details mng on emp.manager_id = mng.id
+     where emp.name = 'David'
+    union all
+     select e.id as emp_id, e.name as emp_name, e.manager_id, m.name as manager_name
+     from emp_details e
+     join cte on cte.manager_id = e.id
+     left join emp_details m on e.manager_id = m.id
+    )
+select *
+from cte;
+
+
+Prashanth
+select e.id as Emp_Id, e.name as Emp_Name, m.name as Manager_Name, 1 as level
+from emp_details e
+Join emp_details m on e.id = m.Manager_id where m.name = 'David'
+
+
+with recursive cte as
+    (select e.id as Emp_Id, e.name as Emp_Name, e.manager_id, m.name as Manager_Name--, 1 as level
+    from emp_details e
+    Join emp_details m on e.id = m.Manager_id where m.name = 'David'
+    union all
+     select e.id as emp_id, e.name as emp_name, e.manager_id, 'none'::varchar as manager_name
+     from emp_details e
+     join cte on cte.manager_id = e.id
+     --join emp_details m on e.manager_id = m.id
+    )
+select *
+from cte;
+
+
+Brent
+with recursive cte as
+    (select emp.id as emp_id, emp.name as emp_name , emp.manager_id, m.name as manager_name
+     from emp_details emp
+     join emp_details m on emp.manager_id=m.id
+     where emp.name = 'David'
+     union all
+     select e.id as emp_id, e.name as emp_name, e.manager_id, mng.name
+     from emp_details e
+     join cte on e.id = cte.manager_id
+     left join emp_details mng on e.manager_id=mng.id)
+select emp_id, emp_name, manager_name
+from cte ;
+
+
+
+
+/* ************************************************************************** */
+-- RECURSIVE SQL Query syntax in Other RDBMS:
+/* Q3: Find the hierarchy of managers for a given employee "David"*/
+-- PostgreSQL
+with recursive managers as
+	(select id as emp_id, name as emp_name, manager_id
+	 , designation as emp_role, 1 as level
+	 from emp_details e where id=7
+	 union
+	 select e.id as emp_id, e.name as emp_name, e.manager_id
+	 , e.designation as emp_role, level+1 as level
+	 from emp_details e
+	 join managers m on m.manager_id = e.id)
+select *
+from managers;
+
+-- Oracle
+with  managers (emp_id, emp_name, manager_id, designation, lvl) as
+	(select id as emp_id, name as emp_name, manager_id
+	 , designation as emp_role, 1 as lvl
+	 from emp_details e where id=7
+	 union all
+	 select e.id as emp_id, e.name as emp_name, e.manager_id
+	 , e.designation as emp_role, lvl+1 as lvl
+	 from emp_details e
+	 join managers m on m.manager_id = e.id)
+select *
+from managers;
+
+-- MSSQL (Microsoft SQL Server)
+with  managers (emp_id, emp_name, manager_id, designation, lvl) as
+	(select id as emp_id, name as emp_name, manager_id
+	 , designation as emp_role, 1 as lvl
+	 from emp_details e where id=7
+	 union all
+	 select e.id as emp_id, e.name as emp_name, e.manager_id
+	 , e.designation as emp_role, lvl+1 as lvl
+	 from emp_details e
+	 join managers m on m.manager_id = e.id)
+select *
+from managers;
+
+-- MySQL
+with recursive managers as
+	(select id as emp_id, name as emp_name, manager_id
+	 , designation as emp_role, 1 as level
+	 from demo.emp_details e where id=7
+	 union
+	 select e.id as emp_id, e.name as emp_name, e.manager_id
+	 , e.designation as emp_role, level+1 as level
+	 from demo.emp_details e
+	 join managers m on m.manager_id = e.id)
+select *
+from managers;
+/* ************************************************************************** */

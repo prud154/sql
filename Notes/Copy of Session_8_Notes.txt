@@ -1,0 +1,156 @@
+select * from customers;
+select * from products;
+select * from sales_order;
+
+1) Find the average sales order price based on deal size
+select deal_size, round(avg(sales)::decimal,2) avg_sales
+from sales_order
+group by deal_size;
+
+select deal_size, round(avg(cast(sales as decimal)),2) avg_sales
+from sales_order
+group by deal_size;
+
+
+2) Find total no of orders per each day. Sort data based on highest orders.
+
+select order_date,count(1) as num_orders
+from sales_order
+group by order_date
+order by 2 desc;
+
+select order_date,count(1) as num_orders
+from sales_order
+group by order_date
+order by count(1) desc;
+
+select order_date,count(1) as num_orders
+from sales_order
+group by order_date
+order by num_orders desc;
+
+
+
+3) Display the total sales figure for each quarter. Represent each quarter with their respective period.
+
+select case when qtr_id = 1 then 'Jan-Mar'
+            when qtr_id = 2 then 'Apr-Jun'
+            when qtr_id = 3 then 'Jul-Sep'
+            when qtr_id = 4 then 'Oct-Dec'
+            else 'Invalid Quarter'
+       end as quarter
+, round(sum(sales::decimal),2) total_sales
+from sales_order
+group by qtr_id;
+
+
+
+
+
+4) Identify how many cars, Motorcycles, trains and ships are available in the inventory.
+Treat all type of cars as just "Cars".
+
+-- Solution 1:
+select product_line, count(1)
+from (
+        select case when product_line in ('Classic Cars', 'Vintage Cars') then 'Cars'
+                    else product_line
+               end as product_line
+        from products
+        where product_line in ('Classic Cars', 'Vintage Cars', 'Motorcycles', 'Trains', 'Ships')
+    )
+group by product_line;
+
+
+Solution 2:
+
+select case when product_line in ('Classic Cars', 'Vintage Cars') then 'Cars'
+            else product_line
+       end as product_line
+, count(1)
+from products
+where product_line in ('Classic Cars', 'Vintage Cars', 'Motorcycles', 'Trains', 'Ships')
+group by case when product_line in ('Classic Cars', 'Vintage Cars') then 'Cars'
+            else product_line
+       end ;
+
+select case when product_line in ('Classic Cars', 'Vintage Cars') then 'Cars'
+            else product_line
+       end as new_product_line
+, count(1)
+from products
+where product_line in ('Classic Cars', 'Vintage Cars', 'Motorcycles', 'Trains', 'Ships')
+group by new_product_line;
+
+
+Solution 3:
+
+select product_line, count(1)
+from products
+where product_line in ('Motorcycles', 'Trains', 'Ships')
+group by product_line
+union all
+select 'Cars' as prod, count(1)
+from products
+where product_line in ('Classic Cars', 'Vintage Cars');
+
+
+
+
+
+select 'Mohan'
+union all
+select 'Mohan'
+union all
+select 'James';
+
+
+(select 'Mohan'
+union
+select 'James')
+
+except
+select 'James';
+
+
+
+-- Solutions from learners;
+select product_line, count(product_line) as product_line_count
+from products group by product_line having product_line in ('Motorcycles', 'Classic Cars', 'Trains', 'Ships')
+
+select product_line,count(1) from Products
+where PRODUCT_LINE like '%Car%' or PRODUCT_LINE like '%Motorcycle%' or PRODUCT_LINE like '%Trains%'
+group by product_line
+
+select product_line, count(1) from products
+where upper(product_line) like '%CARS%' or upper(product_line) = 'MOTORCYCLES' or upper(product_line) = 'TRAINS' OR upper(product_line) = 'SHIPS'
+GROUP BY PRODUCT_LINE;
+
+HEm: pretty correct
+SELECT CASE WHEN PRODUCT_LINE LIKE '%Cars%' THEN 'Cars' ELSE PRODUCT_LINE END AS TYPE
+, COUNT(1)
+FROM PRODUCTS
+GROUP BY CASE WHEN PRODUCT_LINE LIKE '%Cars%' THEN 'Cars' ELSE PRODUCT_LINE END
+
+
+
+-- create table test("first name" varchar(20)); -- allowed in sql but not recommended. DO not have space in your column name.
+
+
+-->
+5) Identify the vehicles in the inventory which are short in number.
+Shortage of vehicle is considered when there are less than 10 vehicles.
+
+
+select product_line , count(1)
+from products
+group by product_line
+having count(1) < 10;
+
+
+
+-- Assignments:
+6) Find the countries which have purchased more than 10 motorcycles.
+7) Find the orders where the sales amount is incorrect.
+8) Fetch the total sales done for each day.
+9) Fetch the top 3 months which have been doing the lowest sales.

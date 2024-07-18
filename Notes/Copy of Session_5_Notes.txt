@@ -1,0 +1,170 @@
+create role accenture ;
+
+select * from customers;
+
+create view vw_customers
+as
+select customer_id, first_name, last_name from customers;
+
+
+select * from vw_customers;
+
+grant all on vw_customers to accenture;
+
+revoke select on vw_customers from accenture;
+
+
+
+-- BASIC SQL QUERIES:
+
+select * from BRANCH;
+select * from CUSTOMERS;
+select * from ACCOUNTS;
+select * from TRANSACTIONS;
+select * from EMPLOYEES;
+
+select -- list all the columns / *
+from -- tables
+where -- filter conditions
+
+-- 1) write a query to fetch trns_id, trns date, amount for net banking trns only.
+
+select t.trns_id, t.trns_date, t.amount trns_amount
+from transactions t
+where trns_type = 'net banking'
+
+-- 2) write a query to fetch employee name and salary whose salary is greater than 50000 and who belong to BR1
+
+select * --first_name, last_name, salary
+from employees
+where salary > 50000
+and branch_code = 'BR1';
+
+select * -- first_name, last_name, salary
+from employees
+where salary > 50000
+or branch_code = 'BR1';
+
+
+true and true --> true
+true and false --> false
+false and true --> false
+false and false --> false
+
+true or true --> true
+true or false --> true
+false or true --> true
+false or false --> false
+
+
+select * --first_name, last_name, salary
+from employees
+where salary > 50000
+and branch_code = 'BR1'
+and salary < 60000;
+
+select * --first_name, last_name, salary
+from employees
+where salary > 50000
+or branch_code = 'BR1'
+or salary < 60000;
+
+
+select * --first_name, last_name, salary
+from employees
+where salary > 50000
+and (branch_code = 'BR1'
+    or salary < 60000);
+
+select * --first_name, last_name, salary
+from employees
+where salary > 50000
+and branch_code = 'BR1'
+    or salary < 60000;
+
+
+-- 3) fetch employees whose first name starts with J or whose salary is greater than 70000.
+select *
+from employees
+where first_name like 'J%'
+or salary > 70000;
+
+
+select *
+from employees
+where first_name not like 'J%'
+or salary > 70000;
+
+
+-- 4) fetch accounts with balance in between 3000 to 5000
+select *
+from ACCOUNTS
+where balance between 3000 and 5000;
+
+
+select *
+from ACCOUNTS
+where balance >= 3000 and balance <= 5000;
+
+
+-- 5) find if a given number is even or odd ? Given numbers are 432, 77
+
+select case when 432 % 2 = 1
+                then 'Odd Number'
+            else 'Even Number'
+       end as odd_or_even ;
+
+select case when 432 % 2 = 1
+                then 'Odd Number'
+            --else 'Even Number'
+       end as odd_or_even ;
+
+
+-- 6) find customer who did not provide a phone no.
+select *
+from customers
+where phone_no is null;
+
+
+-- 7) Find all the different type of transaction.
+select distinct trns_type, trns_date
+from transactions;
+
+
+-- 8) sort the employee data as per first name and highest dob.
+
+select * from CUSTOMERS
+order by first_name , dob desc
+
+
+select * from ACCOUNTS
+order by acc_type, balance ;
+
+-- 9) Fetch the first 5 trns
+
+select * from transactions -- postgresql, mysql
+limit 5;
+
+select top 5 * from transactions -- mssql
+
+select * from transactions where rownum <= 5 -- oracle
+
+select * from transactions fetch next 5 records only; -- oracle
+
+
+
+-- Assignments for Session 5:
+
+1) Fetch all transaction data.
+2) Fetch account_number and acc type from all accounts.
+3) Fetch customer id and name of all active customers.
+4) Fetch customer id and name of all active customers who were born after 2000.
+5) Find employees whose salary ranges from 50k to 70k
+6) Find customers who have not provided basic information such as address or phone number.
+7) Find customers having "oo" in their name.
+8) Identify the total no of wire transfer transactions.
+9) Identify the unique transaction type.
+10) Fetch the first 5 transactions
+11) Fetch the inactive customers name, phone no, address and dob. Display the the oldest customer first.
+12) Find the customers who are from either "77 Lien Park", "337 Westend Park" or "9 Troy Plaza".
+13) Fetch all customers who have "Park" or "Plaza" in their address.

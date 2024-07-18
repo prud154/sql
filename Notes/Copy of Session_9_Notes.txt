@@ -1,0 +1,172 @@
+-- Assignments & solutions from Session 8:
+6) Find the countries which have purchased more than 10 motorcycles.
+    select p.product_line, c.country, count(1)
+    from Sales_order s
+    join products p on p.product_code = s.product
+    join customers c on c.customer_id = s.customer
+    where p.product_line = 'Motorcycles'
+    group by p.product_line, c.country
+    having count(1) > 10
+    order by 3 desc;
+7) Find the orders where the sales amount is incorrect.
+    select *
+    from Sales_order
+    where (quantity_ordered*price_each)::decimal <> sales ;
+8) Fetch the total sales done for each day.
+    select order_date, sum(sales)::decimal as sales
+    from Sales_order
+    group by order_date
+    order by 2 desc;
+9) Fetch the top 3 months which have been doing the lowest sales.
+    select to_char(order_date, 'Mon'), sum(sales)::decimal as sales
+    from Sales_order
+    group by to_char(order_date, 'Mon')
+    order by 2
+    limit 3;
+
+
+-- SESSION 9 STARTS here:
+
+-- Order of execution in SQL:
+SELECT      -- 6
+FROM        -- 1
+JOIN        -- 2
+WHERE       -- 3
+GROUP BY    -- 4
+HAVING      -- 5
+ORDER BY    -- 7
+LIMIT       -- 8
+
+
+-- SUBQUERY: Subquery is a query inside a query. Also referred to as inner query.
+Types of subquery:
+-- Scalar subquery
+    --> Returns 1 row and 1 column
+-- Multirow subquery:
+    --> a) Returns multiple rows and 1 column
+    --> b) Returns multiple rows and multiple column
+-- Correlated subquery
+    --> a subquery which depends on the outer query.
+
+select * from paintings;
+select * from artists;
+select * from collectors;
+select * from sales;
+
+1) Fetch paintings that are priced higher than the average painting price.
+
+select *
+from paintings
+where listed_price > (select avg(listed_price) from paintings);
+
+-- Select * from paintings having listed_price > avg(listed_price); -- WRONG SYNTAX
+
+2) Fetch all collectors who purchased paintings.
+
+select *
+from collectors
+where id in (select collector_id from sales);
+
+select distinct c.*
+from collectors c
+join sales s on s.collector_id = c.id
+
+
+3) Fetch the total amount of sales for each artist who has sold at least one painting.
+Display artist name and total sales amount
+
+select a.*, x.total_amt
+from artists a
+join  (select artist_id, sum(sales_price) total_amt
+       from sales s
+       group by artist_id) x
+    on x.artist_id = a.id;
+
+select artist_id, a.first_name, a.last_name, sum(sales_price), count(1)
+from sales s
+join artists a on a.id = s.artist_id
+group by artist_id, a.first_name, a.last_name;
+
+
+4) Fetch the total amount of sales for each artist who has sold either 1 or 2 paintings only.
+Display also the no of paintings sold.
+
+select artist_id, a.first_name, a.last_name, sum(sales_price), count(1)
+from sales s
+join artists a on a.id = s.artist_id
+group by artist_id, a.first_name, a.last_name
+having count(1) between 1 and 2;
+
+-- Solution from learners:
+Hem
+SELECT ARTIST_ID, A.FIRST_NAME, A.LAST_NAME, SUM(SALES_PRICE) AS "Total Sales", COUNT(1) AS "Paintings Sold"
+FROM SALES S
+INNER JOIN ARTISTS A ON A.ID = S.ARTIST_ID
+GROUP BY ARTIST_ID, A.FIRST_NAME, A.LAST_NAME HAVING COUNT(1) IN ('1', '2')
+
+Leigh
+select concat(first_name,' ', last_name) as artist, sum(sales_price),count(painting_id) as no_paintings
+from artists as art
+right join sales on artist_id = art.id
+group by artist having count(painting_id) in (1,2);
+
+select concat(first_name,' ', last_name) as artist, sum(sales_price),count(painting_id) as no_paintings
+from artists as art
+right join sales on artist_id = art.id
+group by first_name,last_name having count(painting_id) in (1,2)
+
+
+jay -- wrong
+select sum(sales_price), first_name, last_name
+from artists join sales on artists.id = sales.artist_id
+where sales between 1 and 2 group by first_name,last_name;
+
+Adam
+select a.artist_id, sum(sales_price)
+from sales
+join ( select artist_id from sales group by artist_id having count(1) in (1,2) ) a
+    on sales.artist_id = a.artist_id group by a.artist_id
+
+Prashanth
+Select a.first_name,a.Last_name,x.total_amount
+From artists a
+Join (select artist_id,Sum(sales_price) total_amount
+      From sales s Group by artist_id Having count(sales_price) between 1 and 2) x
+        On a.id=x.artist_id
+
+Brent
+select s.artist_id, a.first_name, a.last_name,sum(sales_price), count(*)
+from sales s
+join artists a on a.id=s.artist_id
+group by s.artist_id, a.first_name, a.last_name having count(*) in (1,2)
+
+
+
+5) Find the names of the artists who had zero sales.
+
+select *
+from artists a
+where not exists (select 1 from sales s
+                  where s.artist_id = a.id);
+
+select *
+from artists a
+where id not in (select artist_id from sales s );
+
+
+
+6) Suppose you insert the below 2 records to the artists table. Write a query to identify the duplicate artists.
+    insert into artists values (5,'Kate','Smith');
+    insert into artists values (6,'Natali','Wein');
+
+    select * from artists;
+
+    select first_name, last_name, count(1)
+    from artists
+    group by first_name, last_name
+    having count(1) > 1;
+
+
+ASSIGNMENTS:
+7) How would you delete the duplicate records in artists table?
+8) For each collector, calculate the number of paintings purchased

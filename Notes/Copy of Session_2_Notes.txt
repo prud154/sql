@@ -1,0 +1,44 @@
+-- Create database using below command:
+CREATE DATABSE BANKING;
+
+
+-- Connect to BANKING database and create below tables.
+
+-- BANKING Dataset
+Customers
+Accounts
+Products - car load, house loan, fixed deposit, saving account
+Employees
+Transactions - type of trns, amt, date,
+Branch -
+
+create table customers
+(
+    first_name  varchar(20),
+    last_name   varchar(20),
+    id          int,
+    acc_no      int,
+    dob         date,
+    address     varchar(200),
+    phone       int
+);
+
+select * from customers;
+
+alter table customers rename column id to cust_id;
+alter table customers rename to customers_new;
+alter table customers_new rename to customers;
+alter table customers alter column phone type bigint;
+
+rename column
+rename table name
+modify a data type
+add a column
+remove a column
+
+drop table customers;
+
+
+-- ASSIGNMENTS:
+Create the following 5 tables.
+Have appropriate columns and data types and also try to have these tables related to one another.

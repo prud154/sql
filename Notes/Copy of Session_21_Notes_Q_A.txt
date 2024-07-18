@@ -1,0 +1,40 @@
+
+-- From Ramesh
+-- Understanding Nested CASE Statement:
+create or replace procedure pr_nested_case(num int, res out varchar)
+language plpgsql
+as $$
+declare
+v_res varchar;
+
+
+
+begin
+    Select
+        case when num > 0 and num <= 10 -- level 1
+                 then '0-10'
+             else case when num > 10 and num <= 20 -- level 2
+                           then '10-20'
+                       else case when num > 20 and num <= 30 -- level 3
+                                     then '20-30'
+                                 else case when num > 30 and num <= 40 -- level 4
+                                               then case when num = 45
+                                                             then 'exact match'
+                                                         when num > 42
+                                                             then '>42'
+                                                         else 'come out'
+                                                    end
+                                           else case when num > 40 and num <= 50 -- level 5
+                                                         then '40-50'
+                                                     else '>50'
+                                                end
+                                      end
+                            end
+                   end
+         end as Nested_Case
+    into v_res;
+   res = v_res;
+end;
+$$
+
+call pr_nested_case(45,'');

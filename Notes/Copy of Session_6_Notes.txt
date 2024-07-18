@@ -1,0 +1,165 @@
+-- Using BANKING dataset:
+
+select * from BRANCH;
+select * from CUSTOMERS;
+select * from ACCOUNTS;
+select * from TRANSACTIONS;
+select * from EMPLOYEES;
+
+8) Identify the total no of wire transfer transactions.
+
+window functions
+aggregate functions -- sum, avg, min, max, count
+in build functions - date functions, string functions, etc etc
+
+select count(*), sum(amount), avg(amount), min(trns_date), max(trns_date)
+from transactions
+where trns_type = 'wire transfer';
+
+select count(*)
+from transactions
+where trns_type <> 'wire transfer'; -- we can also use != to represent NOT EQUAL TO
+
+select count(*), count(1), count(1234446), count('XYZ'), count(phone_no), count(customer_id)
+from customers ;
+
+select count(distinct is_active)
+from customers ;
+
+select count(*)
+from transactions
+where trns_type <> 'wire transfer'
+or 1 = 2;
+
+
+14) Find employees working in Mumbai
+
+select * from EMPLOYEES
+where branch_code = 'BR2';
+
+select * from branch where branch_name = 'Mumbai';
+
+-- INNER JOIN
+
+select e.*, b.*
+from employees e
+inner join branch b on b.branch_code = e.branch_code
+where b.branch_name = 'Mumbai';
+
+select e.*, b.*
+from employees e
+inner join branch b on b.branch_code = e.branch_code and b.branch_name = 'Mumbai';
+
+/*
+select e.*, b.*
+from employees e
+inner join branch b on e.emp_id = b.branch_code;
+*/
+
+
+15) Find total no of successful transactions that belong to inactive customers. ---
+
+select * from CUSTOMERS;
+select * from transactions;
+select * from accounts;
+
+select count(*)
+from customers c
+join accounts a on a.cust_id = c.customer_id
+join transactions t on t.acc_number = a.account_number
+where t.status = 'Success'
+and c.is_active = 'false';
+
+/* does not work due to order of the tables
+select count(*)
+from transactions t
+join accounts a on a.cust_id = c.customer_id
+join customers c on t.acc_number = a.account_number
+where t.status = 'Success'
+and c.is_active = 'false'; */
+
+
+16) Categorise employees based on their salary.
+[Below 50k is Low salary, between 50k to 70 is medium salary, above 70k is high salary.]
+
+select  (first_name || ' ' || last_name) as full_name
+, case when salary < 50000 then 'Low Salary'
+       when salary between 50000 and 70000 then 'Medium Salary'
+       when salary > 70000 then 'High Salary'
+       else 'STRANGE'
+  end as categories
+from employees;
+
+
+select 'tech' || ' ' || 'TFQ' as name;
+select concat('tech', 'TFQ', ' ', 'YouTUBE') as name;
+
+
+
+17) Find the total balance of all savings account.
+
+select sum(balance)
+from accounts
+where acc_type = 'Saving'
+
+
+18) Display the total account balance in all the Loan and saving accounts.
+
+SELECT sum (balance)
+from accounts
+WHERE acc_type = 'Loan' or acc_type = 'Saving';
+
+SELECT sum (balance)
+from accounts
+WHERE acc_type  in ('Loan', 'Saving') ;
+
+
+
+-- Using Sales Order Dataset:
+
+select * from Sales_order;
+select * from Customers;
+select * from Products;
+
+1) Fetch all the small shipped orders from August 2003 till the end of year 2003.
+
+select *
+from sales_order
+where deal_size = 'Small'
+and month_id >= 8
+and year_id = 2003;
+
+select *
+from sales_order
+where deal_size = 'Small'
+and order_date between to_date('01-08-2003', 'dd-mm-yyyy') and  to_date('31-12-2003', 'dd-mm-yyyy')
+
+select *
+from sales_order
+where deal_size = 'Small'
+and month_id between 8 and 11
+and year_id = 2003;
+
+
+2) Find all the orders which do not belong to customers from USA and are still in process.
+
+select * from Customers where country <> 'USA';
+select * from sales_order where status = 'In Process';
+
+select *
+from Customers C
+JOIN sales_order s on s.customer = c.customer_id
+where c.country <> 'USA'
+and s.status = 'In Process';
+
+
+-- Assignemts for Session 6:
+3) Find all orders for Planes, Ships and Trains which are neither Shipped nor In Process nor Resolved.
+4) Find customers whose phone number has either parenthesis "()" or a plus sign "+".
+5) Find customers whose phone number does not have any space.
+6) Fetch all the orders between Feb 2003 and May 2003 where the quantity ordered was an even number.
+7) Find orders which sold the product for price higher than its original price.
+8) Find the average sales order price
+9) Count total no of orders.
+10) Find the total quantity sold.
+11) Fetch the first order date and the last order date.

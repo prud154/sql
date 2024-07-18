@@ -1,0 +1,134 @@
+select * from Album; -- 347
+select * from Artist; -- 275
+select * from Customer; -- 59
+select * from Employee; -- 8
+select * from Genre; -- 25
+select * from Invoice; -- 412
+select * from InvoiceLine; -- 2240
+select * from MediaType; -- 5
+select * from Playlist; -- 18
+select * from PlaylistTrack; -- 8715
+select * from Track; -- 3503
+
+1) Find the artist who has contributed with the maximum no of songs. Display the artist name and the no of albums.
+
+with cte as
+    (select ar.name as artist_name, count(1) as no_of_songs
+     , rank() over (order by count(1) desc) as rnk
+    from track t
+    join Album al on al.albumid = t.albumid
+    join artist ar on ar.artistid = al.artistid
+    group by ar.name)
+select artist_name, no_of_songs
+from cte
+where rnk = 1;
+
+
+
+11) Which is the most popular and least popular genre?
+ -- Popularity is defined based on how many times it has been purchased.
+
+-- incorrect
+select g.name as genre_name, count(1) as no_of_purchase
+, first_value(g.name) over (order by count(1) desc) as most_popular
+, first_value(g.name) over (order by count(1)
+                          range between unbounded preceding and unbounded following) as least_popular
+from invoiceline il
+join track t on t.trackid = il.trackid
+join genre g on g.genreid = t.genreid
+group by g.name
+order by 2 desc
+
+
+-- correct
+with cte as
+    (select g.name as genre_name, count(1) as no_of_purchase
+    , rank() over(order by count(1) desc) rnk
+    from invoiceline il
+    join track t on t.trackid = il.trackid
+    join genre g on g.genreid = t.genreid
+    group by g.name)
+select genre_name, 'Most Popular' as Popularity
+from cte
+where rnk = 1
+union
+select genre_name, 'Least Popular' as Popularity
+from cte
+where rnk = (select max(rnk) from cte)
+
+
+
+select * from Album; -- 347
+select * from Artist; -- 275
+select * from Customer; -- 59
+select * from Employee; -- 8
+select * from Genre; -- 25
+select * from Invoice; -- 412
+select * from InvoiceLine; -- 2240
+select * from MediaType; -- 5
+select * from Playlist; -- 18
+select * from PlaylistTrack; -- 8715
+select * from Track; -- 3503
+
+10) Find artist who have performed in multiple genres. Diplay the aritst name and the genre.
+
+with cte as
+        (select distinct ar.name as artist_name, g.name as genre_name
+        from track t
+        join album al on al.albumid = t.albumid
+        join artist ar on ar.artistid = al.artistid
+        join genre g on g.genreid = t.genreid ),
+    multiple_genre as
+        (select artist_name, count(1)
+        from cte
+        group by artist_name
+        having count(1) > 1)
+select mg.artist_name, cte.genre_name
+from multiple_genre mg
+join cte on cte.artist_name = mg.artist_name
+order by 1,2;
+
+
+
+
+13) Identify the 5 most popular artist for the most popular genre.
+    Popularity is defined based on how many songs an artist has performed in for the particular genre.
+    Display the artist name along with the no of songs.
+
+with cte as
+        (select g.genreid, g.name as genre_name, count(1) as no_of_purchase
+        , rank() over(order by count(1) desc) rnk
+        from invoiceline il
+        join track t on t.trackid = il.trackid
+        join genre g on g.genreid = t.genreid
+        group by g.genreid, g.name),
+    most_popular_genre as
+        (select genreid, genre_name from cte where rnk = 1 )  ,
+    final_data as
+        (select  ar.name as artist_name, count(1) as no_of_songs
+         , rank() over (order by count(1) desc) as rnk
+        from track t
+        join album al on al.albumid = t.albumid
+        join artist ar on ar.artistid = al.artistid
+        join most_popular_genre pop on pop.genreid = t.genreid
+        group by ar.name)
+select artist_name, no_of_songs
+from final_data
+where rnk < 6;
+
+
+
+-- Assignment Queries
+1) Find the artist who has contributed with the maximum no of songs. Display the artist name and the no of albums.
+2) Display the name, email id, country of all listeners who love Jazz, Rock and Pop music.
+3) Find the employee who has supported the most no of customers. Display the employee name and designation
+4) Which city corresponds to the best customers?
+5) The highest number of invoices belongs to which country?
+6) Name the best customer (customer who spent the most money).
+7) Suppose you want to host a rock concert in a city and want to know which location should host it.
+8) Identify all the albums who have less then 5 track under them.
+9) Display the track, album, artist and the genre for all tracks which are not purchased.
+10) Find artist who have performed in multiple genres. Diplay the aritst name and the genre.
+11) Which is the most popular and least popular genre? (Popularity is defined based on how many times it has been purchased.)
+12) Identify if there are tracks more expensive than others. If there are then display the track name along with the album title and artist name for these expensive tracks.
+13) Identify the 5 most popular artist for the most popular genre. Display the artist name along with the no of songs. (Popularity is defined based on how many songs an artist has performed in for the particular genre.)

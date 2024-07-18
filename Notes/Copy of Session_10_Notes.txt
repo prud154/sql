@@ -1,0 +1,167 @@
+select * from paintings;
+select * from artists;
+select * from collectors;
+select * from sales;
+
+6) Suppose you insert the below 2 records to the artists table. Write a query to identify the duplicate artists.
+    insert into artists values (5,'Kate','Smith');
+    insert into artists values (6,'Natali','Wein');
+
+    select * from artists;
+
+    select first_name, last_name, count(1)
+    from artists
+    group by first_name, last_name
+    having count(1) > 1;
+
+7) How would you delete the duplicate records in artists table?
+
+   select a.*, a.ctid from artists a;
+
+   -- This works for all
+   delete from artists
+   where ctid in (
+                   select max(ctid)
+                   from artists
+                   group by first_name, last_name
+                   having count(1) > 1);
+
+   -- If multiple duplicate records then use below query.
+   delete from artists
+   where ctid not in (
+                   select min(ctid)
+                   from artists
+                   group by first_name, last_name);
+
+   -- This query works if the table already has a unique column (like id in this case)
+   delete from artists
+   where id in (
+                   select max(id)
+                   from artists
+                   group by first_name, last_name
+                   having count(1) > 1);
+
+
+-- In Oracle:
+   delete from artists
+   where rowid in (
+                   select max(rowid)
+                   from artists
+                   group by first_name, last_name
+                   having count(1) > 1);
+
+-- in MySQL:
+-- Using self join
+delete a from artists a
+join artists b
+where a.id > b.id
+and a.first_name = b.first_name
+and a.last_name = b.last_name;
+
+
+-- using window function: -- creates Windows/Partitions
+select *
+, row_number() over()  as single_part
+, row_number() over(partition by first_name order by first_name)  as rn_with_partitions
+from artists;
+
+delete from artists
+where id in (select id
+            from (select *
+                , row_number() over(partition by first_name, last_name )  as rn
+                from artists) x
+            where rn > 1);
+
+
+-- explanation for why we cannot use rn inside subquery:
+select * from (
+                select *
+                , row_number() over(partition by first_name, last_name )  as rn
+                from artists ) x
+where rn > 1;
+
+
+-- Imagine a table with 1M records and 10k duplicate records. How to delete faster?
+    insert into artists values (2,'Kate','Smith');
+    insert into artists values (3,'Natali','Wein');
+-- Option 1:
+select * from artists; -- 6 records
+select * from artists_bkp; -- 4 records
+
+create table artists_bkp as
+select distinct * from artists;
+
+truncate table artists;
+
+insert into artists
+select * from artists_bkp;
+
+drop table artists_bkp;
+
+
+-- Option 2: -- Not recomended in production or dev environment (if table is used by other ppl)
+
+create table artists_bkp as
+select distinct * from artists;
+
+drop table artists;
+alter table artists_bkp rename to artists;
+
+
+
+
+
+-- JOINS
+INNER JOIN / JOIN
+LEFT OUTER JOIN / LEFT JOIN
+RIGHT OUTER JOIN / RIGHT JOIN
+FULL OUTER JOIN / FULL JOIN
+NATURAL JOIN
+CROSS JOIN
+SELF JOIN
+
+INNER JOIN --> Returns matching records
+LEFT JOIN  --> INNER JOIN + Returns records present only in LEFT table (based on the join condition).
+RIGHT JOIN --> INNER JOIN + Returns records present only in RIGHT table (based on the join condition).
+FULL JOIN  --> INNER JOIN + LEFT JOIN + RIGHT JOIN
+
+-- New Painting dataset for JOINS
+select * from paintings;
+select * from artists;
+select * from collectors;
+select * from sales;
+
+
+1) Fetch names of all the artists along with their painting name.
+    If an artist does not have a painting yet, display as "NA"
+
+select a.id,concat(a.first_name, ' ', a.last_name) as artist_name
+, p.name as painting_name
+from artists a join paintings p on p.artist_id = a.id
+
+
+select a.id,concat(a.first_name, ' ', a.last_name) as artist_name
+, case when p.name is null
+            then 'NA'
+       else p.name
+  end as painting_name
+from artists a left join paintings p on p.artist_id = a.id;
+
+
+select a.id,concat(a.first_name, ' ', a.last_name) as artist_name
+, coalesce(p.name, 'NA') as painting_name
+from artists a left join paintings p on p.artist_id = a.id
+
+
+-- Alternate functions for coalesce in other RDBMS is:
+-- Oracle --> NVL, NVL2, coalesce
+-- MySQL --> ifnull
+-- MSSQL --> COALESCE
+
+-- mentioning tables in the left of join and the right of join clause matters. -- below returns wrong data.
+select a.id,concat(a.first_name, ' ', a.last_name) as artist_name
+, case when p.name is null
+            then 'NA'
+       else p.name
+  end as painting_name
+from paintings p left join artists a on p.artist_id = a.id
